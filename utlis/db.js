@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
-const mongoURI = 'mongodb://127.0.0.1:27017/GDGCAMUAPPSEV/USERSS';
+
+// MongoDB Atlas connection URI
+const mongoURI = "mongodb+srv://gm4175urjitupadhyay:URJIT2024u@gdgcamuapp.gcluk.mongodb.net/GDGCAMUAPP?retryWrites=true&w=majority";
+
 const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
