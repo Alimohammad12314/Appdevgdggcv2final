@@ -5,38 +5,61 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import morgan from "morgan";
 import passport from "passport";
-import session from "express-session";  // Import express-session
-import googleAuth from "./middleware/googleAuth.js"; // Path to Google Auth middleware
-import { facebookAuth } from "./middleware/facebookAuth.js"; // Corrected import
-import twitterAuth from "./middleware/twitterAuth.js"; // Import Twitter Auth middleware
+import session from "express-session";
+import googleAuth from "./middleware/googleAuth.js";
+import { facebookAuth } from "./middleware/facebookAuth.js";
+import twitterAuth from "./middleware/twitterAuth.js";
+import AuthRoutes from "./routes/AuthRoutes.js";
+import AdminRoutes from "./routes/AdminRoutes.js";
+import swaggerJsDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
-import AuthRoutes from "./routes/AuthRoutes.js"; // Correct import for Auth routes
-import AdminRoutes from "./routes/AdminRoutes.js"; // Admin routes if any
-
-dotenv.config(); // Load environment variables
+dotenv.config();
 
 const app = express();
 
 // Configure session support for Passport
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-session-secret',  // Set a session secret
-  resave: false,  // Do not force the session to be saved back to the store
-  saveUninitialized: true,  // Save uninitialized sessions
-  cookie: { secure: false }  // Set 'true' for HTTPS in production, 'false' for development
+  secret: process.env.SESSION_SECRET || 'your-session-secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set 'true' for HTTPS in production
 }));
 
-// Google and Facebook Authentication middleware initialization
-googleAuth(); // Initialize Google OAuth strategy
-facebookAuth(); // Initialize Facebook OAuth strategy
-twitterAuth(); // Initialize Twitter OAuth strategy
-app.use(passport.initialize()); // Initialize Passport middleware
-app.use(passport.session());  // Initialize Passport session support
+// Initialize authentication strategies
+googleAuth();
+facebookAuth();
+twitterAuth();
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors());
 app.use(morgan("dev"));
+
+// Swagger Configuration
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Authentication & Admin API",
+      version: "1.0.0",
+      description: "API documentation for authentication and admin management",
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+        description: "Local Development Server"
+      }
+    ],
+  },
+  apis: ["./routes/*.js"], // Include all routes for documentation
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // MongoDB connection
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/adminDB";
@@ -46,8 +69,8 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
-app.use("/api/admin", AdminRoutes);  // Admin routes if any
-app.use("/api/auth", AuthRoutes);    // Authentication routes
+app.use("/api/admin", AdminRoutes);
+app.use("/api/auth", AuthRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -64,4 +87,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Swagger Docs available at http://localhost:${PORT}/api-docs`);
 });
